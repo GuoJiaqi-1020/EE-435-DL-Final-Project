@@ -1,12 +1,5 @@
 import torch
 
-def rnn_crossentroy(args, prob, y, loss_fn):
-    loss = 0
-    for b in range(args.batch_size):
-        loss += loss_fn(prob[b], y.squeeze()[b])
-    loss = loss / args.batch_size
-    return loss
-
 def train(args, dataloader, model, loss_fn, optimizer):
     size = len(dataloader.dataset)
     running_loss = 0
@@ -16,10 +9,9 @@ def train(args, dataloader, model, loss_fn, optimizer):
 
         # Compute prediction error
         pred = model(X)
-        if args.model == 'rnn':    # crossentropy loss for rnn
-            loss = rnn_crossentroy(args, pred, y, loss_fn)
-        else:
-            loss = loss_fn(pred, y)
+        # print(pred[0])
+        # print(y.squeeze())
+        loss = loss_fn(pred, y.squeeze())
 
         # Backpropagation
         optimizer.zero_grad()
@@ -40,20 +32,10 @@ def test(args, dataloader, model, loss_fn):
         for X, y in dataloader:
             X, y = X.to(args.device), y.to(args.device)
 
-            # test ffnn model
-            if args.model == 'ffnn':
-                pred = model(X)
-            
-            # test rnn model. The prediction should be ouput one by one.
-            elif args.model == 'rnn':
-                pred_, h = model(X[:,0,:], h)
-                pred = pred_
-                for i in range(len(y)-1):
-                    pred_, h = model(pred_, h)
-                    pred = torch.cat((pred, pred_), 1)
+            pred = model(X)
 
             # calculate loss
-            test_loss += loss_fn(pred, y).item()
+            test_loss += loss_fn(pred, y.squeeze()).item()
             correct += (pred.argmax(1) == y).type(torch.float).sum().item()
     test_loss /= num_batches
     correct /= size

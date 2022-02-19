@@ -2,30 +2,42 @@ from turtle import forward
 import torch
 from torch import nn
 
-class FFNN(nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.linear = nn.Linear(input_size, output_size)
-    
-    def forward(self, x):
-        x = self.linear(x)
-        prob = nn.Softmax(dim=1)(x)
-        y_pred = prob.argmax(1)
-        return y_pred
+class CNNModel(torch.nn.Module):
 
-class RNN(nn.Module):
-    def __init__(self) -> None:
-        super().__init__()
-        self.embedding = nn.Embedding(num_embeddings = 33271, embedding_dim = 100)
-        self.rnn = nn.RNN(input_size = 100, hidden_size = 256, num_layers = 2, nonlinearity = 'tanh', batch_first = True)
-        self.fc = nn.Linear(256, 33271) 
-        
-    def forward(self, x, h=None):
-        x = self.embedding(x.squeeze())
-        if h is None:
-            x, h = self.rnn(x)
-        else:
-            x, h = self.rnn(x, h)
-        x = self.fc(x)
-        y_prob = nn.Softmax(dim=2)(x)
-        return y_prob, h
+    def __init__(self):
+        super(CNNModel, self).__init__()
+        self.features = nn.Sequential(
+            nn.Conv2d(in_channels = 3,
+                      out_channels = 64,
+                      kernel_size=3, stride=2, padding=1),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=2),
+            nn.Conv2d(64, 192, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=2),
+            nn.Conv2d(192, 384, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(384, 256, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(256, 256, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=2),
+        )
+            
+        #Fully connected layers
+        self.classifier = nn.Sequential(
+            nn.Dropout(),
+            nn.Linear(2304, 4096),
+            nn.ReLU(inplace=True),
+            nn.Dropout(),
+            nn.Linear(4096, 4096),
+            nn.ReLU(inplace=True),
+            nn.Linear(4096, 3),
+        )
+
+    def forward(self, x):
+        x = self.features(x)
+        #we must flatten our feature maps before feeding into fully connected layers
+        x = x.contiguous().view(x.size(0), 2304)
+        x = self.classifier(x)
+        return x
