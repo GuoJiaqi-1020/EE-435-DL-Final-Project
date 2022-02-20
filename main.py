@@ -28,7 +28,7 @@ def main():
 
     # training and validation
     loss_fn = torch.nn.CrossEntropyLoss()
-    optimizer = optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
+    optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
 
     for t in range(args.epochs):
         print(f"Epoch {t+1}\n-------------------------------")
