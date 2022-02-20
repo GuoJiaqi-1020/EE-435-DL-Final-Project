@@ -2,11 +2,12 @@ import torch
 from torch import nn
 from dataset import get_train_val_test_dataloader
 from models import CNNModel
+import torchvision.models as models
 from train_test import train, test
 
 class arguments:
     # data
-    data_dir = 'Data/Pixel50/'
+    data_dir = '../Data/Pixel50/'
     # train : val : test = 0.7 : 0.2 : 0.1
     train_val_proportion = 0.9
     train_proportion = 0.7
@@ -23,7 +24,8 @@ def main():
     train_dataloader, val_dataloader, test_dataloader = get_train_val_test_dataloader(args)
 
     # model
-    model = CNNModel().to(args.device)
+    # model = CNNModel().to(args.device)
+    model = models.vgg16()
     print(f"Using {args.device} device")
 
     # training and validation
